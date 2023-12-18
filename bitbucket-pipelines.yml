@@ -1,0 +1,172 @@
+.node_anchors:
+
+  ### GENERAL SNIPPETS
+image_awscli: &image_awscli 'atlassian/pipelines-awscli:1.18.167'
+
+clone_module: &clone_module |
+  mkdir -p ~/.ssh
+  echo $PIPELINE_REPO_SSH_KEY > ~/.ssh/id_rsa.tmp
+  base64 -d ~/.ssh/id_rsa.tmp > ~/.ssh/id_rsa
+  chmod 600 ~/.ssh/id_rsa
+  base64 ~/.ssh/id_rsa
+  git clone git@bitbucket.org:tunubi/nubi-devops-pipelines.git -b $PIPELINE_REPO_BRANCH
+
+image: python:3.8.5
+
+#TODO: We really need Rabbit here? Why is not explicit on env variables?
+
+pipelines:
+  pull-requests:
+      '**':
+      - step:
+          name: Test and standards
+          caches:
+            - pip
+          services:
+             - postgres #The same as run `docker run -p5432:5432 postgres` in local (Also you will need create a database with the correct name)
+             - rabbitmq
+          script:
+              - export PORT="7105"
+              - export DB_URI="postgresql://postgres@localhost:5432/db_for_test"
+              - export ALEMBIC_CONFIG="$(pwd)/users/orm/alembic.ini"
+              - export CUSTOMER_API_URL=http://customer.api
+              - export JWT_SECRET=secret
+              - export BROKER_URL=amqp://localhost:5672
+              - export CONTACT_CONFIRMATION_EXPIRATION_TIMEDELTA=48
+              - export IDENTITY_VALIDATION_SVC_URL=http://identity-validation-svc
+              - export MERLIN_API_URL=http://merlin-api:7015
+              - pip install -r requirements.txt
+              - flake8 users
+              - pytest
+  branches:
+      master:
+          - step:
+              name: Build and test
+              caches:
+                - pip
+                - sonar
+              services:
+                - postgres
+                - rabbitmq
+              script:
+                - export PORT="7105"
+                - export DB_URI="postgresql://postgres@localhost:5432/db_for_test"
+                - export ALEMBIC_CONFIG="$(pwd)/users/orm/alembic.ini"
+                - export CUSTOMER_API_URL=http://customer.api
+                - export JWT_SECRET=secret
+                - export BROKER_URL=amqp://localhost:5672
+                - export CONTACT_CONFIRMATION_EXPIRATION_TIMEDELTA=48
+                - export IDENTITY_VALIDATION_SVC_URL=http://identity-validation-svc
+                - export MERLIN_API_URL=http://merlin-api:7015
+                - pip install -r requirements.txt
+                - flake8 users
+                - pytest --junitxml=pytest-report.xml --cov-report xml --cov=./ --cov-config=.coveragerc
+              artifacts: # defining the artifacts to be passed to each future step.
+                - pytest-report.xml
+                - coverage.xml
+          - step:
+              name: Clone Module Repo
+              script:
+                - *clone_module
+              artifacts: ##ver manera de que tome todo
+                - nubi-devops-pipelines/**
+          - step:
+              image: *image_awscli
+              name: Build Docker Image
+              script:
+                - export env=dev
+                - ./nubi-devops-pipelines/pipelines/script.sh build_and_push
+              services:
+                - docker
+              
+      release:          
+          - step:
+              name: Clone Module Repo
+              script:
+                - *clone_module
+              artifacts: 
+                - nubi-devops-pipelines/**
+          - step:
+              image: *image_awscli
+              name: Build Docker Image
+              script:
+                - export env=stg
+                - ./nubi-devops-pipelines/pipelines/script.sh build_and_push      
+              services:
+                - docker
+
+  tags:
+    'release-prod-*.*':
+          - step:
+              name: Clone Module Repo
+              script:
+                - *clone_module
+              artifacts: 
+                - nubi-devops-pipelines/**
+          - step:
+              image: *image_awscli
+              name: Build Docker Image
+              script:
+                - export from=stg
+                - ./nubi-devops-pipelines/pipelines/script.sh promote
+              services:
+                - docker
+
+    'hotfix-prod-*.*':   
+          - step:
+              name: Clone Module Repo
+              script:
+                - *clone_module
+              artifacts: 
+                - nubi-devops-pipelines/**
+          - step:
+              image: *image_awscli
+              name: Build Docker Image
+              script:
+                - export env=prod
+                - ./nubi-devops-pipelines/pipelines/script.sh build_and_push
+              services:
+                - docker
+  custom:
+    build-docker:
+          - step:
+              name: Clone Module Repo
+              script:
+                - *clone_module
+              artifacts: 
+                - nubi-devops-pipelines/**
+          - step:
+              image: *image_awscli
+              name: Build Docker Image
+              script:
+                - ./nubi-devops-pipelines/pipelines/script.sh build_and_push
+              services:
+                - docker
+
+    deploy-rollback:
+          - variables:
+              - name: IMAGE_ID
+          - step:
+              name: Clone Module Repo
+              script:
+                - *clone_module
+              artifacts: 
+                - nubi-devops-pipelines/**
+          - step:
+              image: *image_awscli
+              name: Build Docker Image
+              script:
+                - ./nubi-devops-pipelines/pipelines/script.sh rollback
+              services:
+                - docker
+definitions:
+  services:
+    postgres:
+      image: postgres:11.4
+      variables:
+        POSTGRES_DB: 'db_for_test'
+        POSTGRES_USER: 'postgres'
+    rabbitmq:
+      image: rabbitmq:3.8.6-management
+  caches:
+        sonar: /root/.sonar/cache

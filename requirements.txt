@@ -1,0 +1,12 @@
+git+https://WalletInts:F9VzAfN6ZqnbHpmYxrKR@bitbucket.org/tunubi/nwk-corelib.git@v1.0.0
+git+https://WalletInts:F9VzAfN6ZqnbHpmYxrKR@bitbucket.org/tunubi/nwk-events.git@v0.1.0
+git+https://WalletInts:F9VzAfN6ZqnbHpmYxrKR@bitbucket.org/tunubi/nwk-loggers.git@v0.0.8
+git+https://WalletInts:F9VzAfN6ZqnbHpmYxrKR@bitbucket.org/tunubi/nwk-odm.git@v0.1.8
+git+https://WalletInts:F9VzAfN6ZqnbHpmYxrKR@bitbucket.org/tunubi/nwk-rest-client.git@v0.2.1
+git+https://WalletInts:F9VzAfN6ZqnbHpmYxrKR@bitbucket.org/tunubi/nwk-tests.git@v0.3.0
+fastapi==0.70.0
+fastapi-versioning==0.10.0
+uvicorn[standard]
+alembic
+psycopg2==2.8.3
+PyJWT==2.3.0

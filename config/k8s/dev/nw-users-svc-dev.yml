@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nw-users-svc
+  name: nw-users-svc
+  namespace: nw-users-svc-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nw-users-svc
+  strategy:
+    rollingUpdate:
+      maxSurge: 20%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nw-users-svc
+    spec:
+      containers:
+        - name: nw-users-svc-api
+          image: 531383821710.dkr.ecr.us-east-1.amazonaws.com/nw-users-svc
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: "DD_AGENT_HOST"
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          envFrom:
+          - configMapRef:
+              name: nw-users-svc-configmap
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /v2/users/status
+              port: 7105
+            initialDelaySeconds: 4
+            periodSeconds: 10
+          ports:
+            - containerPort: 7105
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /v2/users/status
+              port: 7105
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: shared-account-ecr
+      restartPolicy: Always

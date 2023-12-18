@@ -1,0 +1,1108 @@
+swagger: '2.0'
+info:
+  title: USERS
+  description: ''
+  version: 2.0.0
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    in: header
+    name: Authorization
+tags:
+  - name: status
+    description: Status health of the service for K8s.
+  - name: backoffice-ops
+    description: Operations Team back office resources.
+  - name: users
+    description: main root EP with users operations. Filters, getters, etc
+  - name: signup
+    description: Sign up flow stages resources
+  - name: service-agreements
+    description: Auxiliar endpoints to provide service-agreements-svc funtionality from users-svc
+paths:
+  /v2/users/status:
+    get:
+      tags:
+        - status
+      summary: Status
+      description: Get microservice status
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+        '503':
+          description: Raised when database connection is not available
+  /v2/users/byId/{user_id}/:
+    get:
+      tags:
+        - backoffice-ops
+      summary: Get user by GUID.
+      description: Query to get a specific user by its GUID
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          description: 'GUID of the user'
+          type: string
+      responses:
+        200 - OK:
+          description: successful
+          schema:
+            $ref: '#/definitions/UserResourceOkResponse'
+        206 - Partial Response:
+          description: Resolution error
+          schema:
+            $ref: '#/definitions/UserResourcePartialResponse'
+        404 - Entity Not Found:
+          description: Entity not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        400 - Bad Request:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+        500 - Internal Server Error (Read):
+          description: Bad request
+          schema:
+            $ref: '#/definitions/PrivateStorageReadErrorResponse'
+        500 - Internal Server Error:
+          description: internal server error
+          schema:
+            $ref: '#/definitions/UnknownErrorResponse'
+  /v2/users/byDocument/{document_type}/{document_value}/{service_agr_id}:
+    get:
+      tags:
+        - backoffice-ops
+      summary: Get user by document and service agreement id.
+      description: Query to get a specific user by its document and service agreement id
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: document_type
+          description: 'Type of document to query by, options: DNI, CUIL.'
+          type: string
+        - in: path
+          required: true
+          name: document_value
+          description: Value of document to query by.
+          type: string
+        - in: path
+          required: true
+          name: service_agr_id
+          description: Value of service agreement id to query by.
+          type: string
+      responses:
+        200 - OK:
+          description: successful
+          schema:
+            $ref: '#/definitions/UserResourceOkResponse'
+        206 - Partial Response:
+          description: Resolution error
+          schema:
+            $ref: '#/definitions/UserResourcePartialResponse'
+        404 - Entity Not Found:
+          description: Entity not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        400 - Bad Request:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+        500 - Internal Server Error (Read):
+          description: Bad request
+          schema:
+            $ref: '#/definitions/PrivateStorageReadErrorResponse'
+        500 - Internal Server Error:
+          description: internal server error
+          schema:
+            $ref: '#/definitions/UnknownErrorResponse'
+  /v2/users/byDocument/{document_type}/{document_value}/businessModel/{business_model}:
+    get:
+      tags:
+        - backoffice-ops
+      summary: Get user by document and business model.
+      description: Query to get a specific user by its document and service agreement id
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: document_type
+          description: 'Type of document to query by, options: DNI, CUIL.'
+          type: string
+        - in: path
+          required: true
+          name: document_value
+          description: Value of document to query by.
+          type: string
+        - in: path
+          required: true
+          name: business_model
+          description: Value of business model to query by.
+          type: string
+      responses:
+        200 - OK:
+          description: successful
+          schema:
+            $ref: '#/definitions/UserResourceOkResponse'
+        206 - Partial Response:
+          description: Resolution error
+          schema:
+            $ref: '#/definitions/UserResourcePartialResponse'
+        404 - Entity Not Found:
+          description: Entity not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        400 - Bad Request:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+        500 - Internal Server Error (Read):
+          description: Bad request
+          schema:
+            $ref: '#/definitions/PrivateStorageReadErrorResponse'
+        500 - Internal Server Error:
+          description: internal server error
+          schema:
+            $ref: '#/definitions/UnknownErrorResponse'
+
+  /v2/users/{user_id}/contact_methods:
+    get:
+      tags:
+        - users
+      summary: "Get an array with all the user's contact methods."
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          description: User ID to get the contact methods from.
+      responses:
+        200 - OK:
+          description: User ID found and fecthed from zero to n contact methods.
+          schema:
+            $ref: '#/definitions/UserContactMethodsResourceOkResponse'
+
+  /v2/users/signup/{user_id}:
+    get:
+      tags:
+        - signup
+      summary: "Get user's current sign up stage (BUGY: MDD-406)"
+      description: Get the current sign up stage for the user with the provided user id.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          description: User id to get sign up stage.
+      responses:
+        200 - OK:
+          description: User's sign up stage found.
+          schema:
+            $ref: '#/definitions/SignUpResourceOkResponse'
+        404 - NOT FOUND:
+          description: SignUp stage not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+  /v2/users/signup/email_confirmation:
+    post:
+      tags:
+        - signup
+      summary: Register user with email
+      description: Register a new user with its email
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: payload
+          description: Payload to create a customer.
+          required: true
+          schema:
+            $ref: "#/definitions/CreateEmailConfirmationRequest"
+      responses:
+        201 - CREATED:
+          description: Successful sign up. Returns user id.
+          schema:
+            $ref: '#/definitions/SignUpResourceCreatedResponse'
+        400 - BAD REQUEST invalid data:
+          description: The email format or the service agreement doesn't exists.
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+        400 - BAD REQUEST email already taken:
+          description: The request email is already taken.
+          schema:
+            $ref: '#/definitions/UniqueResourceErrorResponse'
+  /v2/users/signup/email_confirmation/{token}:
+    get:
+      tags:
+        - signup
+      summary: Confirm user's email.
+      description: Register a new user with its email
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: token
+          type: string
+          description: Confirmation token received in user's email inbox
+      responses:
+        200 - OK:
+          description: Successful confirmed email. Returns user id.
+          schema:
+            $ref: '#/definitions/EmailConfirmationResourceOkResponse'
+        400 - BAD REQUEST:
+          description: The token is invalid.
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+        404 - NOT FOUND:
+          description: The user or the signup doest exist
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        410 - GONE:
+          description: The user was deleted or the signup resource was expired
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        500 - INTERNAL SERVER ERROR private storae read error:
+          description: The token is invalid.
+          schema:
+            $ref: '#/definitions/PrivateStorageReadErrorResponse'
+        500 - INTERNAL SERVER ERROR unknown error:
+          description: The token is invalid.
+          schema:
+            $ref: '#/definitions/UnknownErrorResponse'
+  /v2/users/signup/{user_id}/phone_confirmation:
+    post:
+      tags:
+        - signup
+      summary: "Generate the Phone Confirmation OTP and send it by SMS. (BUGY: MDD-268, MDD-387)"
+      description: Send a message with a OTP number verification message.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          description: User id to send message to confirm phone number.
+        - in: body
+          name: payload
+          description: Payload to create a customer.
+          required: true
+          schema:
+            $ref: "#/definitions/CreatePhoneConfirmationRequest"
+      responses:
+        201 - CREATED:
+          description: Successful phone confirmation creation.
+          schema:
+            $ref: '#/definitions/SignUpResourceSavedOkResponse'
+        404 - NOT FOUND:
+            description: User not found
+            schema:
+              $ref: '#/definitions/EntityNotFoundErrorResponse'
+    patch:
+      tags:
+        - signup
+      summary: "Confirm the phone number with OTP retrived via SMS. (BUGY: MDD-368)"
+      description: Send a message with a OTP number verification message.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          description: User id to send message to confirm phone number.
+        - in: body
+          name: payload
+          description: Payload to create a customer.
+          required: true
+          schema:
+            $ref: "#/definitions/ConfirmPhoneRequest"
+      responses:
+        200 - OK:
+          description: Successful phone confirmation.
+          schema:
+            $ref: '#/definitions/SignUpResourceSavedOkResponse'
+        410 - GONE:
+          description: Phone confirmation OPT was expired
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        404 - NOT FOUND:
+            description: User or phone not found
+            schema:
+              $ref: '#/definitions/EntityNotFoundErrorResponse'
+  /v2/users/signup/{user_id}/identity_validation:
+    get:
+      tags:
+        - signup
+      summary: Retrive user identity.
+      description: Get user's identity data result.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          format: uuid
+          description: User id get identity validation result.
+      responses:
+        200 - OK:
+          description: All the user identity data
+          schema:
+            $ref: '#/definitions/IdentityValidationResourceOkResponse'
+        404 - NOT FOUND:
+          description: User Not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        206 - No Addresses:
+          description: Missing address, should add a new address.
+          schema:
+            $ref: '#/definitions/ConfirmIdentityValidationNoAddressResponse'
+    post:
+      tags:
+        - signup
+      summary: Perform user's identity vaildation against configured services.
+      description: Send identity validation request. This endpoint connects with identity-validation-svc and can propagate its errors from the POST root endpoint.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          format: uuid
+          description: User id to validate identity.
+        - in: body
+          name: payload
+          description: Create identity validation.
+          required: true
+          schema:
+            $ref: "#/definitions/CreateIdentityValidationRequest"
+      responses:
+        201 - CREATED:
+          description: Process was successful and return the user id.
+          schema:
+            $ref: '#/definitions/IdentityValidationPerformedOkResponse'
+        206 - PARTIAL CONTENT:
+          description: Input data is OK but the identity could not be validated by either Facephi or Renaper SID Rostro, and hence identity data query was not performed to Renaper SID Datos.
+          schema:
+            type: map
+            example: {}
+        400 - USER MINOR:
+          description: User is minor and is not allowed to perform the sign up.
+          schema:
+            $ref: '#/definitions/ValidationErrorResponseMinor'
+        400 - BAD REQUEST:
+          description: Client request has something wrong. Either the input is not correct or the request should not be performed.
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+        400 - WRONG SIGN UP STAGE:
+          description: User's sign up stage is not IDENTITY_VALIDATION. Cannot process this sign up stage.
+          schema:
+            $ref: '#/definitions/WrongSignUpErrorResponse'
+        400 - WRONG USER STATUS:
+          description: User's status is not PENDING_VALIDATION. Cannot process this sign up stage.
+          schema:
+            $ref: '#/definitions/WrongUserStatusErrorResponse'
+        404 - NOT FOUND:
+          description: User not found
+          schema:
+              $ref: '#/definitions/EntityNotFoundErrorResponse'
+        500 - Facephi Error:
+          description: There was an internal server error with Facephi. Propagates the error from Facephi inside the message.
+          schema:
+            $ref: '#/definitions/CreateIdentityValidationFacephiErrorResponse'
+        500 - Renaper Error:
+          description: There was an internal server error with Renaper. Describes the error code and error description from Renaper inside the message as a string.
+          schema:
+            $ref: '#/definitions/CreateIdentityValidationRenaperErrorResponse'
+    patch:
+      tags:
+        - signup
+      summary: Confirm user identity.
+      description: Confirm user identity. Aassociate user address and create/associate customer. Can propagate identity-validation-svc errors.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          format: uuid
+          description: User id to confirm identity.
+        - in: body
+          name: payload
+          description: Select user address.
+          required: true
+          schema:
+            $ref: "#/definitions/ConfirmIdentityValidationRequest"
+      responses:
+        200 - OK:
+          description: Identity properly validated.
+          schema:
+            $ref: '#/definitions/SignUpResourceSavedOkResponse'
+        400 - BAD REQUEST:
+          description: Client request has something wrong. Either the input is not correct or the request should not be performed.
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+        404 - NOT FOUND:
+          description: User Not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+
+  /v2/users/signup/{user_id}/legal_validation:
+    patch:
+      tags:
+        - signup
+      summary: Send the customer declaration of his legal validation
+      description: Send legal validation request. This endpoint connects with customers-api microservice and awaits for the response.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          format: uuid
+          description: User id to legal validate.
+        - in: body
+          name: payload
+          description: Create legal validation.
+          required: true
+          schema:
+            $ref: "#/definitions/ConfirmLegalValidationRequest"
+      responses:
+        200 - OK:
+          description: Process was successful.
+          schema:
+            $ref: '#/definitions/SignUpResourceSavedOkResponse'
+        400 - Bad Request:
+            description: Bad request
+            schema:
+              $ref: '#/definitions/ValidationErrorResponse'
+        404 - Entity Not Found:
+          description: Entity not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        424 - FAILED DEPENDENCY:
+          description: Something failed on an external service (either a Nubi microservice different from users-svc or a third party service).
+          schema:
+              $ref: '#/definitions/DependencyErrorResponse'
+        500 - Internal Server Error (Read):
+          description: Bad request
+          schema:
+            $ref: '#/definitions/PrivateStorageReadErrorResponse'
+        500 - Internal Server Error:
+          description: internal server error
+          schema:
+            $ref: '#/definitions/UnknownErrorResponse'
+  /v2/users/signup/{user_id}/credentials:
+    post:
+      tags:
+        - signup
+      summary: "Send the users credentials pin and password (FUTURE: MDD-133)"
+      description: Send credentials data on request. This endpoint connects with auth-api microservice and awaits for the response.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          format: uuid
+          description: User id to legal validate.
+        - in: body
+          name: payload
+          description: Create identity validation.
+          required: true
+          schema:
+            $ref: "#/definitions/CreateCredentialsRequest"
+      responses:
+        201 - CREATED:
+          description: Process was successful and marks
+          schema:
+            $ref: '#/definitions/SignUpResourceSavedOkResponse'
+        400 - BAD REQUEST:
+          description: Fail if pin or password value is wrong
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+  /v2/users/service-agreements/{service_agreement_id}:
+    get:
+      tags:
+        - service-agreements
+      summary: Retrive the Service Agreements
+      description: Send credentials data on request. This endpoint connects with auth-api microservice and awaits for the response.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: service_agreement_id
+          format: int
+          description: Service agreement response
+      responses:
+        200 - OK:
+          description: Process was successful and marks if identity was validated (true) or not (false).
+          schema:
+            $ref: '#/definitions/ServiceAgreementResourceOkResponse'
+        400 - BAD REQUEST:
+          description: When the param service_agreement_id provided has not valid value
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+        404 - Entity Not Found:
+          description: Entity not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+  /v2/users/{user_id}:
+    get:
+      tags:
+        - users
+      description: Query to get a specific user by its GUID
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          required: true
+          name: user_id
+          description: 'GUID of the user'
+          type: string
+      responses:
+        200 - OK:
+          description: successful
+          schema:
+            $ref: '#/definitions/UserResourceResponse'
+        404 - Entity Not Found:
+          description: Entity not found
+          schema:
+            $ref: '#/definitions/EntityNotFoundErrorResponse'
+        400 - Bad Request:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/ValidationErrorResponse'
+components:
+  schemas:
+    Relationship:
+      type: string
+      enum:
+        - MARRIED
+        - SINGLE
+definitions:
+# REQUESTS:
+# ---------------------------------------------------------------------------
+  CreateEmailConfirmationRequest:
+    type: object
+    properties:
+      service_agr_id:
+        type: integer
+        required: true
+      email:
+        type: string
+        required: true
+    example:
+      service_agr_id: 1
+      email: 'test@email.com'
+
+  CreatePhoneConfirmationRequest:
+    type: object
+    properties:
+      phone_number:
+        type: string
+        required: true
+    example:
+      phone_number: '+5401164372323'
+
+  ConfirmPhoneRequest:
+    type: object
+    properties:
+      otp:
+        type: string
+        required: true
+    example:
+      otp: '3142'
+
+  CreateIdentityValidationRequest:
+    type: object
+    properties:
+      ocr:
+        type: string
+        required: true
+      face_id:
+        type: string
+        required: true
+      base64_front:
+        type: string
+        required: true
+      base64_back:
+        type: string
+        required: true
+      base64_selfie:
+        type: string
+        required: true
+      selfie:
+        type: string
+        required: true
+    example:
+      ocr: 'YXNja2xqYW5jc2FzY2tqYXNuY2tsYWpzbmNsa2FzamNubGthanNjbmxha2pzY25sa2FzamNu...'
+      face_id: 'YXNja2xqYW5jc2FzY2tqYXNuY2tsYWpzbmNsa2FzamNubGthanNjbmxha2pzY25sa2FzamNu...'
+      base64_front: 'YXNja2xqYW5jc2FzY2tqYXNuY2tsYWpzbmNsa2FzamNubGthanNjbmxha2pzY25sa2FzamNu..'
+      base64_back: 'YXNja2xqYW5jc2FzY2tqYXNuY2tsYWpzbmNsa2FzamNubGthanNjbmxha2pzY25sa2FzamNu..'
+      base64_selfie: 'YXNja2xqYW5jc2FzY2tqYXNuY2tsYWpzbmNsa2FzamNubGthanNjbmxha2pzY25sa2FzamNu..'
+      selfie: 'YXNja2xqYW5jc2FzY2tqYXNuY2tsYWpzbmNsa2FzamNubGthanNjbmxha2pzY25sa2FzamNu..'
+
+  ConfirmIdentityValidationRequest:
+    type: object
+    properties:
+      address_id:
+        type: string
+        format: uuid
+        required: true
+        example: 4e6fee7c-9fad-4a6a-952a-cd460bef435c
+
+  ConfirmLegalValidationRequest:
+    type: object
+    properties:
+      pep:
+        type: boolean
+        required: true
+      pep_data:
+        type: object
+        required: false
+        properties:
+          link:
+            type: boolean
+            required: false
+          type:
+            type: string
+            required: false
+          name:
+            type: string
+            required: false
+          start:
+            type: string
+            required: false
+            example: yyyy-mm-dd
+      so:
+        type: boolean
+        required: true
+      facta:
+        type: boolean
+        required: true
+      occupation_id:
+        type: string
+        required: true
+      relationship:
+        $ref: '#/components/schemas/Relationship'
+    example:
+      pep: true
+      pep_data:
+        link: false
+        type: 'Presidente'
+        name: 'Nelson Mandela'
+        start: '1994-05-10'
+      so: false
+      facta: false
+      occupation_id: 'd78d9d0f-50f5-4df2-804e-174232772643'
+      relationship: 'MARRIED'
+
+  CreateCredentialsRequest:
+    type: object
+    properties:
+      pin:
+        type: string
+        required: true
+      password:
+        type: string
+        required: true
+    example:
+      pin: 123456
+      password: 's0m3_s3cr3t'
+
+# RESPONSE:
+# -----------------------------------------------------------------------------
+  UserResourceResponse:
+    type: object
+    example:
+      data:
+        id: "4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e"
+        service_agr_id: 1
+        status: ACTIVE
+        customer_id: "edd05051-3e60-4b7a-b86a-1b6a6c5081e4"
+        address_id: "bf736c3a-d50a-4638-a7a8-20a3087db142"
+      hyper: {}
+
+  UserResourceOkResponse:
+    type: object
+    example:
+      data:
+        id: "4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e"
+        type: 0
+        status: ACTIVE
+        firstName: 'Guido'
+        lastName: 'Van Rossum'
+        nationality_id: 'b0ebd9f8-a81d-4a25-97e5-c854a86e6b17'
+        gender: M
+        documentType: CUIL
+        documentNumber: '25123456785'
+        mobileNumber: '+5412345678'
+        email: 'some@email.com'
+        birthDate: '1996-07-01'
+        identifications:
+          -
+           type: CUIL
+           number: '25123456785'
+          -
+           type': DNI,
+           number': '12345678'
+        createdAt: '2022-01-19T00:00:00+00:00'
+        updatedAt: '2022-01-19T00:00:00+00:00'
+      hyper:
+        /v2/users/byId/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e:
+          - GET
+
+  UserResourcePartialResponse:
+    type: object
+    example:
+      data:
+        id: "4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e"
+        type: 0
+        status: ACTIVE
+        firstName: null
+        lastName: null
+        nationality_id: null
+        gender: null
+        documentType: null
+        documentNumber: null
+        mobileNumber: null
+        email: 'some@email.com'
+        birthDate: null
+        identifications: []
+        createdAt: '2022-01-19T00:00:00+00:00'
+        updatedAt: '2022-01-19T00:00:00+00:00'
+      errors:
+        -
+          code: NB-ERROR-00301
+          message: 'Entity Not Found <Customer>'
+      hyper:
+        /v2/users/byId/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e:
+          - GET
+        /v2/users/byDocument/DNI/12345678/20:
+          - GET
+        /v2/users/byDocument/DNI/12345678/businessModel/0:
+          - GET
+
+  SignUpResourceCreatedResponse:
+    example:
+      data: {}
+      hyper: {}
+
+  IdentityValidationPerformedOkResponse:
+    example:
+      data:
+        user_id: '4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e'
+      hyper:
+        /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/identity_validation:
+          - GET
+          - PATCH
+
+  ValidationErrorResponseMinor:
+    example:
+      error:
+        message: 'The person is a minor.'
+        code: 'NB-ERROR-00802'
+
+  SignUpResourceSavedOkResponse:
+    example:
+      data:
+        user_id: '4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e'
+      hyper:
+        /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e:
+          - GET
+
+  ConfirmIdentityValidationNoAddressResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          first_name:
+            type: string
+            example: 'Juan'
+          last_name:
+            type: string
+            example: 'Perez'
+          nationality:
+            type: string
+            example: 'ARGENTINA'
+          gender:
+            type: string
+            example: 'M'
+          dni:
+            type: string
+            example: '33214513'
+          cuil:
+            type: string
+            example: '20332145132'
+          addresses:
+            type: map
+            example: {}
+      hyper:
+        type: object
+        properties:
+          /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e:
+            example:
+              - GET
+          /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/identity_validation:
+            example:
+              - POST
+              - GET
+              - PATCH
+      errors:
+        type: array
+        items:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Missing address, user should add a new address."
+            code:
+              type: string
+              example: "NB-ERROR-00401"
+
+  EmailConfirmationResourceOkResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            example: '22df4321-f068-439a-9aff-3835475ba9e0'
+      hyper:
+        type: object
+        properties:
+          /v2/users/signup/22df4321-f068-439a-9aff-3835475ba9e0/identity_validation:
+            example: ['POST']
+
+  UserContactMethodsResourceOkResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: '27afe04f-f82c-49cc-9f3a-ced75bb95788'
+              description: 'Primary key of the entity.'
+            type:
+              type: string
+              enum: ['EMAIL', 'PHONE_NUMBER']
+            value:
+              type: string
+              example: 'some@email.com or +541112345678'
+              description: 'Email or phone number value.'
+            confirmed:
+              type: bool
+              example: true
+              description: 'Flags if the user has confirmed this email/phone.'
+            user_id:
+              type: string
+              format: uuid
+              example: '50d73820-feee-4a84-9968-0faea52b3108'
+              description: 'Primary key of the user.'
+      hyper:
+        type: map
+        example: {}
+
+  SignUpResourceOkResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          stage:
+            type: string
+      hyper:
+        type: object
+        properties:
+          /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/identity_validation:
+            type: array
+            items:
+              type: string
+          /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/legal_validation:
+            type: array
+            items:
+              type: string
+          /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/credentials:
+            type: array
+            items:
+              type: string
+    example:
+      data:
+        stage: 'IDENTITY_VALIDATION'
+      hyper:
+        /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/identity_validation:
+          - POST
+          - GET
+          - PATCH
+        /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/legal_validation:
+          - PATCH
+        /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/credentials:
+          - POST
+
+  IdentityValidationResourceOkResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          first_name:
+            type: string
+            example: 'Juan'
+          last_name:
+            type: string
+            example: 'Perez'
+          nationality:
+            type: string
+            example: 'ARGENTINA'
+          gender:
+            type: string
+            example: 'M'
+          dni:
+            type: string
+            example: '33214513'
+          cuil:
+            type: string
+            example: '20332145132'
+          addresses:
+            type: map
+            example: {
+                "aa016920-5bfc-46b1-ad90-5c4e8008f2f1": {
+                    "address_id": "aa016920-5bfc-46b1-ad90-5c4e8008f2f1",
+                    "user_id": "de339217-f202-4563-963e-d33f9a42928f",
+                    "status": "SOME_STATUS",
+                    "source": "SOME_SOURCE",
+                    "street_name": "string",
+                    "street_no": "string",
+                    "street_intersection": "string",
+                    "floor_no": "string",
+                    "apartment_no": "string",
+                    "city": "string",
+                    "zip_code": "string",
+                    "exteded_zip_code": "string",
+                    "province_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "country_id": "0f1bfb04-6c2f-4834-a55c-d31853506ae9"
+                },
+                "d029b215-5b6d-45ce-9b5b-14554625a9fa": {
+                  "address_id": "d029b215-5b6d-45ce-9b5b-14554625a9fa",
+                  "user_id": "de339217-f202-4563-963e-d33f9a42928f",
+                  "status": "SOME_STATUS",
+                  "source": "SOME_SOURCE",
+                  "street_name": "string",
+                  "street_no": "string",
+                  "street_intersection": "string",
+                  "floor_no": "string",
+                  "apartment_no": "string",
+                  "city": "string",
+                  "zip_code": "string",
+                  "exteded_zip_code": "string",
+                  "province_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                  "country_id": "0f1bfb04-6c2f-4834-a55c-d31853506ae9"
+                }
+              }
+      hyper:
+        type: object
+        properties:
+          /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e:
+            example:
+              - GET
+          /v2/users/signup/4f3fa4e2-731a-43a9-94e3-74d4e3a22e1e/identity_validation:
+            example:
+              - POST
+              - GET
+              - PATCH
+
+  ServiceAgreementResourceOkResponse:
+    example:
+      data:
+        service_agreement_id: 1
+        legal_validation_config: []
+      hyper: {}
+
+# ERRORS:
+# -----------------------------------------------------------------------------
+  EntityNotFoundErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00401
+        message: 'Entity Not Found <User>'
+
+  ValidationErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00402
+        message: {'some_field': ['Required Field']}
+
+  WrongSignUpErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00402
+        message: 'Sign up stage is not IDENTITY_VALIDATION. (Current sign up stage: EMAIL_CONFIRMATION).'
+
+  WrongUserStatusErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00402
+        message: 'User status is not PENDING_VALIDATION. (Current status: BANNED).'
+
+  DependencyErrorResponse:
+    example:
+      error:
+        message: Internal server error.
+        code: NB-ERROR-00800
+
+  PrivateStorageReadErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00404
+        message: 'Private Storage Read Error'
+
+  UniqueResourceErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00409
+        message: 'Unique Resource Error'
+
+  UnknownErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00400
+        message: 'Unkown Error'
+
+  CreateIdentityValidationFacephiErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00800
+        message:
+          code: NW_DNIV_ERRNO_0002
+          error: User banned for validation. Already notified.
+          message: Exceeded limit of attempts
+
+  CreateIdentityValidationRenaperErrorResponse:
+    example:
+      error:
+        code: NB-ERROR-00800
+        message: 'Renaper failed with error code: 2 - (USUARIO NO REGISTRADO)'

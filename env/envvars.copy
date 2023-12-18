@@ -1,0 +1,9 @@
+PORT=7105
+ALEMBIC_CONFIG=/app/users/orm/alembic.ini
+DB_URI=postgresql://postgres@bank-db/userssvc
+CUSTOMER_API_URL=http://customer.api
+JWT_SECRET=secret
+BROKER_URL=amqp://rabbitmq
+CONTACT_CONFIRMATION_EXPIRATION_TIMEDELTA=48
+IDENTITY_VALIDATION_SVC_URL=http://identity-validation-svc:7106
+MERLIN_API_URL=http://merlin-api:7015
